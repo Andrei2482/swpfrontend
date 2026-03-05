@@ -18,28 +18,31 @@ import {
     FormMessage,
 } from '@/components/ui/form'
 
-const loginSchema = z.object({
-    email: z.string().min(1, 'Required').email('Invalid email'),
+/* ── Schema ─────────────────────────────────────────────────────────────── */
+const schema = z.object({
+    email: z.string().min(1, 'Required').email('Invalid email address'),
     password: z.string().min(1, 'Required'),
 })
-type LoginValues = z.infer<typeof loginSchema>
+type FormValues = z.infer<typeof schema>
 
+/* ── Page ───────────────────────────────────────────────────────────────── */
 export default function LoginPage() {
-    const [showPassword, setShowPassword] = useState(false)
+    const [showPw, setShowPw] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [serverError, setServerError] = useState<string | null>(null)
 
-    const form = useForm<LoginValues>({
-        resolver: zodResolver(loginSchema),
+    const form = useForm<FormValues>({
+        resolver: zodResolver(schema),
         defaultValues: { email: '', password: '' },
+        mode: 'onBlur',
     })
 
-    async function onSubmit(_values: LoginValues) {
+    async function onSubmit(_values: FormValues) {
         setIsLoading(true)
         setServerError(null)
         try {
             await new Promise((r) => setTimeout(r, 900))
-            // TODO: await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, { method:'POST', ... })
+            // TODO: await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(_values) })
         } catch {
             setServerError('Something went wrong. Please try again.')
         } finally {
@@ -52,24 +55,26 @@ export default function LoginPage() {
             <AnimatedBackground />
 
             <div className="w-full max-w-sm animate-fade-in">
-                {/* Logo */}
                 <div className="mb-10">
                     <SwordigoLogo />
                 </div>
 
-                {/* Heading */}
                 <h1 className="text-2xl font-semibold tracking-tight mb-1">Welcome back</h1>
                 <p className="text-sm text-muted-foreground mb-8">Sign in to your account</p>
 
-                {/* Error */}
                 {serverError && (
-                    <p role="alert" aria-live="polite" className="mb-5 text-sm text-destructive">
+                    <p role="alert" aria-live="assertive" className="mb-5 text-sm text-destructive">
                         {serverError}
                     </p>
                 )}
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-5"
+                        noValidate
+                        aria-label="Sign in"
+                    >
                         <FormField
                             control={form.control}
                             name="email"
@@ -79,10 +84,14 @@ export default function LoginPage() {
                                     <FormControl>
                                         <Input
                                             type="email"
+                                            inputMode="email"
                                             placeholder="you@example.com"
                                             autoComplete="email"
+                                            autoCapitalize="none"
+                                            spellCheck={false}
                                             autoFocus
                                             disabled={isLoading}
+                                            aria-required="true"
                                             {...field}
                                         />
                                     </FormControl>
@@ -100,28 +109,30 @@ export default function LoginPage() {
                                         <FormLabel>Password</FormLabel>
                                         <Link
                                             to="/forgot-password"
-                                            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                            className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm px-0.5"
                                         >
-                                            Forgot?
+                                            Forgot password?
                                         </Link>
                                     </div>
                                     <FormControl>
                                         <div className="relative">
                                             <Input
-                                                type={showPassword ? 'text' : 'password'}
+                                                type={showPw ? 'text' : 'password'}
                                                 placeholder="••••••••"
                                                 autoComplete="current-password"
                                                 disabled={isLoading}
                                                 className="pr-10"
+                                                aria-required="true"
                                                 {...field}
                                             />
                                             <button
                                                 type="button"
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none"
-                                                onClick={() => setShowPassword((v) => !v)}
-                                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
+                                                onClick={() => setShowPw((v) => !v)}
+                                                aria-label={showPw ? 'Hide password' : 'Show password'}
+                                                tabIndex={0}
                                             >
-                                                {showPassword
+                                                {showPw
                                                     ? <EyeOff className="size-4" aria-hidden="true" />
                                                     : <Eye className="size-4" aria-hidden="true" />}
                                             </button>
@@ -132,9 +143,15 @@ export default function LoginPage() {
                             )}
                         />
 
-                        <Button type="submit" className="w-full" size="lg" disabled={isLoading} aria-busy={isLoading}>
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            size="lg"
+                            disabled={isLoading}
+                            aria-busy={isLoading}
+                        >
                             {isLoading
-                                ? <><Loader2 className="animate-spin" aria-hidden="true" /> Signing in…</>
+                                ? <><Loader2 className="animate-spin" aria-hidden="true" /><span>Signing in…</span></>
                                 : 'Sign in'}
                         </Button>
                     </form>
