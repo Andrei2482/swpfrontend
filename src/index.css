@@ -2,36 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── shadcn CSS variable palette (dark-only theme) ─────────────────────── */
+/* ── shadcn CSS variable palette — zinc light (default) ─────────────────── */
 @layer base {
   :root {
-    --background: 242 35% 4%;
-    --foreground: 210 20% 96%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
 
-    --card: 242 25% 6%;
-    --card-foreground: 210 20% 96%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
 
-    --popover: 242 25% 6%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 261 75% 64%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 242 18% 13%;
-    --secondary-foreground: 210 15% 72%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 242 18% 13%;
-    --muted-foreground: 240 8% 46%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 242 18% 17%;
-    --accent-foreground: 210 20% 92%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 72% 58%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 242 18% 14%;
-    --input: 242 18% 10%;
-    --ring: 261 75% 64%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
 
     --radius: 0.625rem;
   }
@@ -73,22 +73,11 @@
   }
 }
 
-/* ── Glass card surface ─────────────────────────────────────────────────── */
-@layer components {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.025) !important;
-    backdrop-filter: blur(28px) saturate(160%);
-    -webkit-backdrop-filter: blur(28px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.07) !important;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.03),
-      0 20px 64px rgba(0, 0, 0, 0.55),
-      0 4px 16px rgba(0, 0, 0, 0.4);
-  }
-}
+
 
 /* ── Reduced motion: disable all animations ─────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
