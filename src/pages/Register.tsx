@@ -100,7 +100,7 @@ export default function RegisterPage() {
             confirm_password: '',
             terms: false as unknown as true,
         },
-        mode: 'onBlur',
+        mode: 'onChange',
     })
 
     const pw = form.watch('password')
