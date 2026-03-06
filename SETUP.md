@@ -1,93 +1,108 @@
-# SwordigoPlus Frontend — Setup Guide
-*No CLI required. GitHub uploads + Cloudflare Pages web dashboard only.*
+# Copilot — Cloudflare Pages Setup Guide
+
+This guide walks you through deploying the **SwordigoPlus Copilot** app to Cloudflare Pages using only the web dashboard and GitHub — **no CLI required**.
 
 ---
 
-## Step 1 — Create the GitHub repository
+## Prerequisites
 
-1. Go to [github.com/new](https://github.com/new) and log in.
-2. Name it `swordigoplus-frontend` (or any name you prefer).
-3. Set visibility to **Private** (recommended).
-4. Click **Create repository**.
-5. On the next screen click **uploading an existing file**.
-6. Drag-and-drop the **entire contents** of the `frontend/` folder (all files and subfolders).
-7. Commit message: `chore: initial frontend scaffold` → click **Commit changes**.
-
-> **Tip:** You must upload *contents* of `frontend/`, not the folder itself. Open the folder, select everything inside, and drag it all into GitHub's uploader.
+- A **Cloudflare account** — [dash.cloudflare.com](https://dash.cloudflare.com)
+- A **GitHub account** with the `SwordigoPlus Digital Web` repository pushed
 
 ---
 
-## Step 2 — Connect to Cloudflare Pages
+## Step 1 — Push the code to GitHub
 
-1. Go to [dash.cloudflare.com](https://dash.cloudflare.com).
-2. In the left sidebar click **Workers & Pages**.
-3. Click **Create** → **Pages** → **Connect to Git**.
-4. Authorize GitHub access and select your `swordigoplus-frontend` repository.
-5. Choose **Branch**: `main`.
+1. In your GitHub repository, make sure the `copilot/` folder exists at the root of the repo alongside `frontend/` and `backend/`.
+2. Commit and push all changes.
 
 ---
 
-## Step 3 — Configure the build
+## Step 2 — Create a Cloudflare Pages project
 
-In the **Build settings** form:
+1. Go to [Cloudflare Dashboard → Pages](https://dash.cloudflare.com/?to=/:account/pages).
+2. Click **Create a project**.
+3. Choose **Connect to Git** → select **GitHub**.
+4. Authorize Cloudflare and pick the `SwordigoPlus Digital Web` repository.
+5. Click **Begin setup**.
 
-| Setting | Value |
+---
+
+## Step 3 — Configure the build settings
+
+Fill in the form exactly as shown:
+
+| Field | Value |
 |---|---|
-| Framework preset | **Vite** |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Root directory | *(leave blank)* |
-| Node.js version | `20` (set via Environment Variables: key `NODE_VERSION`, value `20`) |
+| **Project name** | `swordigoplus-copilot` |
+| **Production branch** | `main` |
+| **Framework preset** | None (or Vite) |
+| **Build command** | `cd copilot && npm install && npm run build` |
+| **Build output directory** | `copilot/dist` |
+| **Root directory** | *(leave blank)* |
 
-Click **Save and Deploy**. Cloudflare Pages will run `npm install` then `npm run build` automatically.
+> [!IMPORTANT]  
+> The **Build output directory** must be `copilot/dist` (not just `dist`) because the repo root contains multiple apps.
 
 ---
 
-## Step 4 — Set environment variables
+## Step 4 — Save and deploy
 
-In your Pages project → **Settings** → **Environment Variables**:
+1. Click **Save and Deploy**.
+2. Wait for the build to complete — usually under 2 minutes. ✅
+3. Your Copilot app will be live at `https://swordigoplus-copilot.pages.dev`.
 
-| Variable | Value |
+---
+
+## Step 5 — Set up a custom subdomain (optional)
+
+To serve Copilot on `copilot.swordigoplus.com`:
+
+1. In your Cloudflare Pages project, go to **Custom domains**.
+2. Click **Set up a custom domain**.
+3. Enter `copilot.swordigoplus.com`.
+4. Cloudflare will add the DNS record automatically if your domain is on Cloudflare. Click **Activate domain**.
+
+---
+
+## Step 6 — Environment variables (when backend is ready)
+
+When you're ready to connect to the backend API, add these in **Pages → Settings → Environment variables**:
+
+| Variable | Example value |
 |---|---|
-| `VITE_API_URL` | `https://swordigoplus-backend.<your-subdomain>.workers.dev` |
-| `NODE_VERSION` | `20` |
+| `VITE_API_URL` | `https://api.swordigoplus.com` |
 
-After adding variables, go to **Deployments** → click **Retry deployment** (or push a new commit).
-
----
-
-## Step 5 — Verify the deployment
-
-Your site will be live at:
-`https://<your-project>.pages.dev`
-
-Checklist after deploy:
-- [ ] `https://<your-project>.pages.dev` → redirects to `/login`
-- [ ] Login page loads with animated background
-- [ ] Register page accessible via the "Create one" link
-- [ ] Password strength meter updates as you type
-- [ ] DevTools → **Network** headers show `X-Frame-Options: DENY`, `Content-Security-Policy`, etc.
-- [ ] DevTools → **Accessibility** tree shows no critical errors
-- [ ] Resize window from 320 px → 2560 px — layout stays clean
+> [!NOTE]  
+> All Vite environment variables **must** start with `VITE_` to be exposed to the browser. Set these for both **Production** and **Preview** environments.
 
 ---
 
-## Step 6 — Custom domain (optional)
+## Subsequent deployments
 
-1. Pages project → **Custom domains** → **Set up a custom domain**.
-2. Enter your domain e.g. `app.swordigoplus.com`.
-3. Follow the DNS instructions (add a CNAME record).
+Every `git push` to the `main` branch will automatically trigger a new build and deploy. Preview deployments are created automatically for pull requests.
 
 ---
 
-## Updating the site
+## Local development
 
-Every time you push/upload new files to the `main` branch on GitHub, Cloudflare Pages **automatically re-builds and re-deploys**. There is no manual step required.
+To run the Copilot app locally:
+
+```bash
+cd copilot
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## Wiring up the backend (when ready)
+## Troubleshooting
 
-In `src/pages/Login.tsx` and `src/pages/Register.tsx`, look for the `// TODO: replace with real API call` comment.  
-Uncomment the `fetch()` block and remove the placeholder `await new Promise(...)` line.  
-The API URL is automatically read from `import.meta.env.VITE_API_URL` which you set in Step 4.
+| Problem | Solution |
+|---|---|
+| Build fails with "cannot find module" | Check the build command includes `cd copilot &&` before `npm install` |
+| Blank page after deploy | Ensure build output directory is `copilot/dist` |
+| Routes 404 on refresh | In Pages Settings → Functions, add a **redirect rule**: `/*` → `/index.html` with status `200` |
+| CORS errors from backend | Add `copilot.swordigoplus.com` to the backend's `ALLOWED_ORIGINS` in `wrangler.toml` |
