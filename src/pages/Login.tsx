@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -17,19 +17,31 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components/ui/form'
+import { storeTokens } from '@/lib/auth'
+import { getPostLoginUrl, buildAuthPath } from '@/lib/redirect'
 
-/* ── Schema ─────────────────────────────────────────────────────────────── */
+const API = import.meta.env.VITE_API_URL as string
+
 const schema = z.object({
     email: z.string().min(1, 'Required').email('Invalid email address'),
     password: z.string().min(1, 'Required'),
 })
 type FormValues = z.infer<typeof schema>
 
-/* ── Page ───────────────────────────────────────────────────────────────── */
+interface ApiLoginResponse {
+    ok: boolean
+    data?: {
+        tokens: { access_token: string; token_type: string; expires_in: number }
+        user: { id: string; username: string; email: string; display_name: string | null; role: string }
+    }
+    error?: { code: string; message: string }
+}
+
 export default function LoginPage() {
     const [showPw, setShowPw] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [serverError, setServerError] = useState<string | null>(null)
+    const navigate = useNavigate()
 
     const form = useForm<FormValues>({
         resolver: zodResolver(schema),
@@ -37,14 +49,40 @@ export default function LoginPage() {
         mode: 'onChange',
     })
 
-    async function onSubmit(_values: FormValues) {
+    async function onSubmit(values: FormValues) {
         setIsLoading(true)
         setServerError(null)
         try {
-            await new Promise((r) => setTimeout(r, 900))
-            // TODO: await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(_values) })
+            const res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(values),
+            })
+            const json = await res.json() as ApiLoginResponse
+
+            if (!res.ok || !json.ok) {
+                const code = json.error?.code
+                if (code === 'RATE_LIMITED') {
+                    setServerError('Too many attempts. Please wait a moment before trying again.')
+                } else if (code === 'ACCOUNT_BANNED') {
+                    setServerError('Your account has been suspended. Contact support for assistance.')
+                } else {
+                    setServerError(json.error?.message ?? 'Invalid email or password.')
+                }
+                return
+            }
+
+            storeTokens(json.data!.tokens.access_token)
+
+            const dest = getPostLoginUrl()
+            if (dest.startsWith('http')) {
+                window.location.href = dest
+            } else {
+                navigate(dest, { replace: true })
+            }
         } catch {
-            setServerError('Something went wrong. Please try again.')
+            setServerError('Could not reach the server. Check your connection and try again.')
         } finally {
             setIsLoading(false)
         }
@@ -108,7 +146,7 @@ export default function LoginPage() {
                                     <div className="flex items-center justify-between">
                                         <FormLabel>Password</FormLabel>
                                         <Link
-                                            to="/forgot-password"
+                                            to={buildAuthPath('/forgot-password')}
                                             className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm px-0.5"
                                         >
                                             Forgot password?
@@ -159,7 +197,10 @@ export default function LoginPage() {
 
                 <p className="mt-8 text-sm text-muted-foreground">
                     Don&apos;t have an account?{' '}
-                    <Link to="/register" className="text-foreground font-medium hover:text-primary transition-colors">
+                    <Link
+                        to={buildAuthPath('/register')}
+                        className="text-foreground font-medium hover:text-primary transition-colors"
+                    >
                         Create one
                     </Link>
                 </p>
