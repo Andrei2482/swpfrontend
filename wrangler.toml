@@ -1,0 +1,55 @@
+name = "swordigoplus-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ─── D1 Database ──────────────────────────────────────────────────────────────
+[[d1_databases]]
+binding       = "DB"
+database_name = "swordigoplus"
+database_id   = "7b88bec5-a151-483e-8937-3aa5c750aa3f"
+
+# ─── Workers AI ───────────────────────────────────────────────────────────────
+# Used by /discord/copilot — AutoRAG search + LLM generation.
+# The AI Search index "swordigoplus-copilot" must be created in the
+# Cloudflare Dashboard → AI → AutoRAG before the endpoint becomes functional.
+[ai]
+binding = "AI"
+
+# ─── Native Rate Limiters ─────────────────────────────────────────────────────
+[[unsafe.bindings]]
+type         = "ratelimit"
+name         = "LOGIN_LIMITER"
+namespace_id = "1001"
+simple       = { limit = 5, period = 60 }
+
+[[unsafe.bindings]]
+type         = "ratelimit"
+name         = "REGISTER_LIMITER"
+namespace_id = "1002"
+simple       = { limit = 3, period = 60 }
+
+# Discord bot Copilot endpoint — 20 queries / 60 sec per source IP
+[[unsafe.bindings]]
+type         = "ratelimit"
+name         = "DISCORD_COPILOT_LIMITER"
+namespace_id = "1003"
+simple       = { limit = 20, period = 60 }
+
+[vars]
+APP_NAME          = "SwordigoPlus"
+CORS_ORIGINS      = "https://app.swordigoplus.cf,https://copilot.swordigoplus.cf"
+COOKIE_DOMAIN     = ".swordigoplus.cf"
+REDIRECT_ORIGINS  = "https://copilot.swordigoplus.cf"
+ACCESS_TOKEN_TTL  = "900"
+REFRESH_TOKEN_TTL = "2592000"
+PBKDF2_ITERATIONS = "100000"
+DISCORD_BOT_HMAC_SECRET = "7fd25514a47ab225189dc6f872cc2a8827789ea2b7117d16069a18b29e3d063b"
+
+# ─── Secrets (never put in [vars] — set via Cloudflare Dashboard or CLI) ──────
+# DISCORD_BOT_HMAC_SECRET  — shared secret between this Worker and the Discord bot
+#
+# To set it in the Cloudflare Dashboard:
+#   Workers & Pages → swordigoplus-api → Settings → Variables → Add Secret
+#   Variable name: DISCORD_BOT_HMAC_SECRET
+#   Value: a cryptographically random 64-character hex string
